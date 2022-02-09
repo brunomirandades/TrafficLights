@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js">
+    </script>
+    <title>Semáforo</title>
+  </head>
+  <body>
+    <style>
+      .tela_desenho {
+        width: 500px;
+        height: 500px;
+        border: 1px solid black;
+      }
+    </style>
+
+    <div class="tela_desenho" onmousemove="myFunction(event)"></div>
+
+    <p id="frames"></p>
+    <p id="vx_mov"></p>
+    <p id="wx_mov"></p>
+
+    <script>
+      // initialize SVG.js
+      var draw = SVG().addTo('div').size('500', '500');
+      var sem_1_pos_x = 145;
+      var sem_1_pos_y = 70;
+      var sem_2_pos_x = 320;
+      var sem_2_pos_y = 310;
+      var red_on = '#ff4000';
+      var red_off = '#4d0000';
+      var yellow_on = '#ffff1a';
+      var yellow_off = '#4d4d00';
+      var green_on = '#53ff1a';
+      var green_off = '#134d00';
+      var x, y;
+
+      /////////// Cruzamento //////////////
+      draw.rect(500, 500).fill('gray');
+      draw_sidewalk(-20, -20);
+      draw_sidewalk(-20, 310);
+      draw_sidewalk(310, -20);
+      draw_sidewalk(310, 310);
+      draw_street_stripes();
+      draw_crosswalk();
+      draw_traffic_lights(sem_1_pos_x, sem_1_pos_y);
+      draw_traffic_lights(sem_2_pos_x, sem_2_pos_y);
+      // draw.circle(22).move(150, 150).fill('black');
+      // draw.circle(22).move(320, 320).fill('black');
+
+      function draw_sidewalk(x_pos, y_pos) {
+        var in_x_pos, in_y_pos;
+        var sidewalk_width = 50;
+
+        if (x_pos<0){
+          in_x_pos = x_pos-sidewalk_width;
+        }
+        else{
+          in_x_pos = x_pos+sidewalk_width;
+        }
+        if (y_pos<0){
+          in_y_pos = y_pos-sidewalk_width;
+        }
+        else{
+          in_y_pos = y_pos+sidewalk_width;
+        }
+
+        draw.rect(210, 210).radius(20).move(x_pos, y_pos).fill('#E9E3E6');
+        draw.rect(210, 210).radius(5).move(in_x_pos, in_y_pos).fill('green');
+      }
+
+      function draw_street_stripes() {
+        //horizontal
+        for (var i = 0; i < 100; i+=30) {draw.rect(20, 6).move(i, 247).fill('white');}
+        for (var i = 540; i > 380; i-=30) {draw.rect(20, 6).move(i, 247).fill('white');}
+        //vertical
+        for (var i = 0; i < 100; i+=30) {draw.rect(6, 20).move(247, i).fill('white');}
+        for (var i = 540; i > 380; i-=30) {draw.rect(6, 20).move(247, i).fill('white');}
+      }
+
+      function draw_crosswalk() {
+        //vertical
+        for (var i = 200; i < 300; i+=15) {draw.rect(60, 10).move(120, i).fill('white');}
+        for (var i = 200; i < 300; i+=15) {draw.rect(60, 10).move(320, i).fill('white');}
+        //horizontal
+        for (var i = 200; i < 300; i+=15) {draw.rect(10, 60).move(i, 120).fill('white');}
+        for (var i = 200; i < 300; i+=15) {draw.rect(10, 60).move(i, 320).fill('white');}
+      }
+
+      function draw_traffic_lights(pos_x, pos_y) {
+        draw.circle(30).move(pos_x, pos_y).fill('Orange');
+        draw.circle(25.5).move(pos_x+2.25, pos_y+45).fill('Orange');
+        draw.polygon('0,0 2.5,45 27.5,45 30,0').move(pos_x, pos_y+15).fill('Orange');
+        draw.circle(18).move(pos_x+6, pos_y+5).fill('black');
+        //vermelho
+        draw.circle(12).move(pos_x+9, pos_y+8).fill(red_off);
+        draw.circle(18).move(pos_x+6, pos_y+26.5).fill('black');
+        //amarelo
+        draw.circle(12).move(pos_x+9, pos_y+29.5).fill(yellow_off);
+        draw.circle(18).move(pos_x+6, pos_y+48).fill('black');
+        //verde
+        draw.circle(12).move(pos_x+9, pos_y+51).fill(green_off);
+        draw.rect(6, 25).move(pos_x+12, pos_y+67).fill('Orange');
+        draw.ellipse(20, 10).move(pos_x+5, pos_y+90).fill('Orange');
+      }
+
+      function turn_red_light_on(pos_x, pos_y, cond) {
+        if (cond == 'on') {draw.circle(12).move(pos_x+9, pos_y+8).fill(red_on);}
+        if (cond == 'off') {draw.circle(12).move(pos_x+9, pos_y+8).fill(red_off);}
+      }
+
+      function turn_yellow_light_on(pos_x, pos_y, cond) {
+        if (cond == 'on') {draw.circle(12).move(pos_x+9, pos_y+29.5).fill(yellow_on);}
+        if (cond == 'off') {draw.circle(12).move(pos_x+9, pos_y+29.5).fill(yellow_off);}
+      }
+
+      function turn_green_light_on(pos_x, pos_y, cond) {
+        if (cond == 'on') {draw.circle(12).move(pos_x+9, pos_y+51).fill(green_on);}
+        if (cond == 'off') {draw.circle(12).move(pos_x+9, pos_y+51).fill(green_off);}
+      }
+
+      /////////// Carros ////////////////
+      var myVar = setInterval(myTimer, 30); //30
+      var carro_temp;
+
+      function draw_car() {
+        var carro_temp = draw.path()
+        carro_temp.marker('end', 200, 110,function(add) {
+          var car_color = pick_car_color();
+          var car_center = 27.5;
+          var window_color = 'lightBlue'
+          //frame
+          // add.rect(200, 110).center(0, 0).fill('white');
+
+          //rear bumper frame
+          add.rect(60, 45).radius(12).center(31, car_center).fill('black');
+          //front bumper frame
+          add.rect(70, 45).radius(20).center(64, car_center).fill('black');
+          //front wheels
+          add.rect(22, 48).radius(5).center(70, car_center).fill('black');
+          //rear wheels
+          add.rect(22, 48).radius(5).center(24, car_center).fill('black');
+          //rear lights
+          add.rect(22, 42).radius(11).center(14, car_center).fill('red');
+          //front lights
+          add.rect(30, 41).radius(20).center(82, car_center).fill(window_color);
+          //chassis
+          add.rect(73, 42).center(47, car_center).fill(car_color);
+          add.rect(30, 25).center(18, car_center).fill(car_color);
+          add.rect(30, 20).radius(2, 8).center(82, car_center).fill(car_color);
+          add.circle(18).center(13, car_center-10.5).fill(car_color);
+          add.circle(18).center(13, car_center+10.5).fill(car_color);
+          add.circle(14).center(83, car_center-10.5).fill(car_color);
+          add.circle(14).center(83, car_center+10.5).fill(car_color);
+          add.ellipse(5, 18).center(88, car_center+14).fill(car_color).rotate(50);
+          add.ellipse(5, 18).center(88, car_center-14).fill(car_color).rotate(50+80);
+          //side windows
+          add.polygon('0,0 5,3 42.5,3 57,0').center(42, car_center-18.5).fill(window_color);
+          add.polygon('0,0 -5,3 52,3 37.5,0').center(42, car_center+18.5).fill(window_color);
+          //mirrors
+          add.ellipse(4, 10).center(67, car_center-23).fill(car_color).rotate(40+90);
+          add.ellipse(4, 10).center(67, car_center+23).fill(car_color).rotate(40);
+          //rear window
+          add.rect(14, 34).radius(8, 11).center(11, car_center).fill(window_color);
+          add.rect(12, 34).center(21, car_center).fill(car_color);
+          //windshield
+          add.polygon('0,0 16,-4 16,32 0,28').center(64, car_center).fill(window_color);
+          add.ellipse(6, 28).center(56, car_center).fill(car_color);
+          add.ellipse(6, 36).center(72, car_center).fill(window_color);
+        })
+
+        return draw.use(carro_temp);
+      }
+
+      //rua horizontal
+      var vx=118;
+      var vy=246;
+      //rua vertical
+      var wx=246; //246
+      var wy=386; //386
+
+      var carro1 = draw_car();
+      var carro2 = draw_car();
+      carro2.rotate(-90, wx, wy);
+
+      var contador=0;
+      var velocidade = 5;
+      var sem1_verde = false;
+      var sem2_verde = false;
+      var cont_curve = 0;
+      var aux_curve = 0;
+      var way_to_go_1 = '';
+      way_to_go_1 = pick_way();
+      // alert(way_to_go_1);
+      var way_to_go_2 = '';
+      way_to_go_2 = pick_way();
+      // alert(way_to_go_2);
+      var wait_time_1 = 0;
+      var wait_time_2 = 0;
+
+      function myTimer() {
+        document.getElementById("frames").innerHTML = contador;
+
+        //ciclo do semáforo
+        if (contador==0){
+          //semaforo 1 vermelho
+          turn_yellow_light_on(sem_1_pos_x, sem_1_pos_y, 'off');
+          turn_red_light_on(sem_1_pos_x, sem_1_pos_y, 'on');
+          sem1_verde = false;
+          //semaforo 2 verde
+          turn_red_light_on(sem_2_pos_x, sem_2_pos_y, 'off');
+          turn_green_light_on(sem_2_pos_x, sem_2_pos_y, 'on');
+          sem2_verde = true;
+          wait_time_2 = contador+20;
+        }
+        else if (contador==150){
+          //semaforo 2 amarelo
+          turn_green_light_on(sem_2_pos_x, sem_2_pos_y, 'off');
+          turn_yellow_light_on(sem_2_pos_x, sem_2_pos_y, 'on');
+        }
+        else if (contador==250){
+          //semaforo 1 verde
+          turn_red_light_on(sem_1_pos_x, sem_1_pos_y, 'off');
+          turn_green_light_on(sem_1_pos_x, sem_1_pos_y, 'on');
+          sem1_verde = true;
+          wait_time_1 = contador+20;
+          //semaforo 2 vermelho
+          turn_yellow_light_on(sem_2_pos_x, sem_2_pos_y, 'off');
+          turn_red_light_on(sem_2_pos_x, sem_2_pos_y, 'on');
+          sem2_verde = false;
+        }
+        else if (contador==400) {
+          //semaforo 1 amarelo
+          turn_green_light_on(sem_1_pos_x, sem_1_pos_y, 'off');
+          turn_yellow_light_on(sem_1_pos_x, sem_1_pos_y, 'on');
+        }
+
+        // ciclo do carro 1
+        if (sem1_verde==true && contador>=wait_time_1) {
+          // run_carro1_straight();
+          // run_carro1_curve();
+          if (way_to_go_1=='straight') {
+            run_carro1_straight();
+          }
+          else if (way_to_go_1=='curve') {
+            run_carro1_curve();
+          }
+        }
+        else if (vx<112 || vx>150) {
+          // run_carro1_straight();
+          // run_carro1_curve();
+          if (way_to_go_1=='straight') {
+            run_carro1_straight();
+          }
+          else if (way_to_go_1=='curve') {
+            run_carro1_curve();
+          }
+        }
+
+        //ciclo do carro 2
+        if (sem2_verde==true && contador>=wait_time_2) {
+          // run_carro2_straight();
+          // run_carro2_curve();
+          if (way_to_go_2=='straight') {
+            run_carro2_straight();
+          }
+          else if (way_to_go_2=='curve') {
+            run_carro2_curve();
+          }
+        }
+        else if (wx>355 || wx<250) {
+          // run_carro2_straight();
+          // run_carro2_curve();
+          if (way_to_go_2=='straight') {
+            run_carro2_straight();
+          }
+          else if (way_to_go_2=='curve') {
+            run_carro2_curve();
+          }
+        }
+
+        carro1.move(vx,vy);
+        carro2.move(wx, wy);
+        contador=contador+1;
+        if (contador>=500){
+          contador=0;
+        }
+      }
+
+      //função de movimento reto do carro 1
+      function run_carro1_straight() {
+        vx+=1*velocidade;
+        if (vx>900) {
+          vx=0;
+          carro1 = draw_car();
+          way_to_go_1 = pick_way();
+          // alert(way_to_go_1);
+        }
+      }
+
+      //função de movimento de curva do carro 1
+      function run_carro1_curve() {
+        // document.getElementById("vx_mov").innerHTML = vx;
+        if (vx<=229) {
+          vx+=1*velocidade;
+          cont_curve = vx;
+        }
+        else if (vx>=230 && cont_curve<320) {
+          cont_curve+=1*velocidade;
+          carro1.rotate(-5, 160,160);
+        }
+        else if (cont_curve>=320) {
+          vx+=1*velocidade;
+        }
+
+        if (vx>500) {
+          vx=0;
+          cont_curve=0;
+          carro1 = draw_car();
+          way_to_go_1 = pick_way();
+          // alert(way_to_go_1);
+        }
+      }
+
+      //função de movimento reto do carro 2
+      function run_carro2_straight() {
+        wx+=1*velocidade;
+        if (wx>1000) {
+          wx=80; //80
+          carro2 = draw_car();
+          carro2.rotate(-90, wx+165, wy);
+          way_to_go_2 = pick_way();
+          // alert(way_to_go_2);
+        }
+      }
+
+      //função de movimento de curva do carro 2
+      function run_carro2_curve() {
+        // document.getElementById('wx_mov').innerHTML = aux_curve;
+        if (wx<=355) {
+          wx+=1*velocidade;
+          aux_curve=wx;
+        }
+        else if (wx>355 && aux_curve<506) {
+          aux_curve+=1*velocidade;
+          carro2.rotate(3, 305, 460);
+        }
+        else if (aux_curve>=506) {
+          wx+=1*velocidade;
+        }
+
+        if (wx>880) {
+          aux_curve=0;
+          wx=80;
+          carro2 = draw_car();
+          carro2.rotate(-90, wx+165, wy);
+          way_to_go_2 = pick_way();
+          // alert(way_to_go_2);
+        }
+      }
+
+      function pick_car_color() {
+        var color_possibilities = [
+          'purple',
+          'blue',
+          'darkRed',
+          'green',
+          'yellow',
+          'black',
+          'chocolate'
+        ];
+        var select_aux = Math.floor(Math.random()*7);
+        var selected_color = color_possibilities[select_aux];
+        return selected_color;
+      }
+
+      function pick_way() {
+        var way_possibilities = [
+          'straight',
+          'curve'
+        ];
+        var select_aux = Math.floor(Math.random()*2);
+        var selected_way = way_possibilities[select_aux];
+        return selected_way;
+      }
+
+    </script>
+  </body>
+</html>
